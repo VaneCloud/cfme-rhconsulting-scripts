@@ -67,6 +67,16 @@ private
       template.update_attributes!(t.slice(
         'description', 'type', 'display', 'service_type',
         'prov_type', 'provision_cost', 'long_description'))
+      
+      unless t['picture_name'].blank?
+	picture_path = Rails.root.join('product', 'pictures', t['picture_name'])
+        raise "Picture Not Found" unless File.exists?(picture_path)
+	ext = t['picture_name'].split('.').last.downcase
+        template.picture = Picture.new
+	template.picture.content = File.read(picture_path)
+	template.picture.extension = ext
+	template.picture.save
+      end
 
       unless t['service_template_catalog_name'].blank?
         template.service_template_catalog = ServiceTemplateCatalog.in_region(MiqRegion.my_region_number).find_by_name(
