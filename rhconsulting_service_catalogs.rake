@@ -67,16 +67,52 @@ private
       template.update_attributes!(t.slice(
         'description', 'type', 'display', 'service_type',
         'prov_type', 'provision_cost', 'long_description'))
-      
+
       unless t['picture_name'].blank?
-	picture_path = Rails.root.join('product', 'pictures', t['picture_name'])
+	    picture_path = Rails.root.join('product', 'pictures', t['picture_name'])
         raise "Picture Not Found" unless File.exists?(picture_path)
-	ext = t['picture_name'].split('.').last.downcase
+	    ext = t['picture_name'].split('.').last.downcase
         template.picture = Picture.new
-	template.picture.content = File.read(picture_path)
-	template.picture.extension = ext
-	template.picture.save
+	    template.picture.content = File.read(picture_path)
+	    template.picture.extension = ext
+	    template.picture.save
       end
+
+      if ['vmware', 'openstack'].include?t['prov_type']
+        if template['prov_type'] == 'vmware'
+          data = YAML.load_file(Rails.root.join('product', 'vaneq_option', 'vmware.yml'))
+          mt = MiqTemplate.where(:vendor => 'vmware').first
+          ems = mt.ext_management_system
+          data['options'][:src_vm_id] = [mt.id, mt.name]
+          host = ems.hosts.first
+          data['options'][:placement_host_name] = [host.id, host.name]
+        elsif template['prov_type'] == 'openstack'
+          data = YAML.load_file(Rails.root.join('product', 'vaneq_option', 'openstack.yml'))
+          mt = MiqTemplate.where(:vendor => 'openstack').first
+          ct = CustomizationTemplate.where(:name => 'vaneq_cloud_init_template').first
+          data['options'][:customization_template_id] = [ct.id, ct.name]
+          data['options'][:customization_template_script] = ct.script
+          mt = MiqTemplate.where(:vendor => 'openstack').first
+          data['options'][:src_vm_id] = [mt.id, mt.name]
+          it = Flavor.where(:ems_id => mt.ems_id).first
+          data['options'][:instance_type] = [it.id, it.name]
+        end
+
+        data['options'][:available_dialogs] = {}
+        Dialog.all.each do |d|
+          data['options'][:available_dialogs][d.id] = d.label
+        end
+        data['options'][:available_catalogs] = ServiceTemplateCatalog.all.collect do |stc|
+          [stc.tenant.present? && stc.tenant.ancestors.present? ? stc.name + " (#{stc.tenant.name})" : stc.name, stc.id]
+        end
+        data['options'][:available_catalogs] = data['options'][:available_catalogs].sort
+        mp = MiqProvisionRequestTemplate.new(data)
+        mp.save
+        template.remove_all_resources
+        template.add_resource(mp)
+        template.save
+      end
+
 
       unless t['service_template_catalog_name'].blank?
         template.service_template_catalog = ServiceTemplateCatalog.in_region(MiqRegion.my_region_number).find_by_name(
@@ -162,7 +198,7 @@ private
       custom_button = parent.custom_buttons.find { |x| x.name == cb['name'] }
       custom_button = CustomButton.new(:applies_to => template) unless custom_button
 
-      custom_button.update_attributes!(cb) 
+      custom_button.update_attributes!(cb)
       parent.add_member(custom_button) if parent.respond_to?(:add_member)
     end
   end
@@ -190,13 +226,13 @@ private
       child_button = custom_button_set.custom_buttons.find { |x| x.name == name }
       child_button.id if child_button
     end.compact
-    set_data[:applies_to_class] = 'ServiceTemplate' 
+    set_data[:applies_to_class] = 'ServiceTemplate'
     set_data[:applies_to_id] = template.id
     custom_button_set.set_data = set_data
   end
 
   def export_service_template_catalogs(catalogs)
-    catalogs.collect { |catalog| catalog.attributes.slice('name', 'description') } 
+    catalogs.collect { |catalog| catalog.attributes.slice('name', 'description') }
   end
 
   def export_service_template_options(options)
@@ -236,7 +272,7 @@ private
         'action', 'ae_namespace', 'ae_class', 'ae_instance', 'ae_message', 'ae_attributes')
       attributes['dialog_label'] = resource_action.dialog.label if resource_action.dialog
       attributes
-    end 
+    end
   end
 
   def export_service_resources(service_resources)
@@ -248,7 +284,7 @@ private
       attributes['resource_name'] = service_resource.resource.name
       attributes['resource_guid'] = service_resource.resource.guid
       attributes
-    end.compact 
+    end.compact
   end
 
   def export_custom_buttons(custom_buttons)
@@ -302,4 +338,3 @@ namespace :rhconsulting do
 
   end
 end
-
