@@ -80,6 +80,7 @@ private
 
       if ['vmware', 'openstack'].include?t['prov_type']
         if template['prov_type'] == 'vmware'
+          raise "找不到 VMWare 提供商, 请通过 VaneQ 前端界面添加.." if ExtManagementSystem.where(:type => 'ManageIQ::Providers::Vmware::InfraManager').empty?
           data = YAML.load_file(Rails.root.join('product', 'vaneq_option', 'vmware.yml'))
           mt = MiqTemplate.where(:vendor => 'vmware').first
           ems = mt.ext_management_system
@@ -87,6 +88,7 @@ private
           host = ems.hosts.first
           data['options'][:placement_host_name] = [host.id, host.name]
         elsif template['prov_type'] == 'openstack'
+          raise "找不到 OpenStack 提供商, 请通过 VaneQ 前端界面添加.." if ExtManagementSystem.where(:type => 'ManageIQ::Providers::Openstack::CloudManager').empty?
           data = YAML.load_file(Rails.root.join('product', 'vaneq_option', 'openstack.yml'))
           mt = MiqTemplate.where(:vendor => 'openstack').first
           ct = CustomizationTemplate.where(:name => 'vaneq_cloud_init_template').first
