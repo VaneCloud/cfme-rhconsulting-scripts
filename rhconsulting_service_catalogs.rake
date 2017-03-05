@@ -6,7 +6,7 @@ class ServiceCatalogsImportExport
   def import(filedir)
     raise "Must supply filedir" if filedir.blank?
     Dir.foreach(filedir) do |filename|
-      next if filename == '.' or filename == '..'
+      next if filename == '.' or filename == '..' or filename == 'openstack' or filename == 'vmware'
       catalogs = YAML.load_file("#{filedir}/#{filename}")
       catalogs.each {|c|
         data = []
