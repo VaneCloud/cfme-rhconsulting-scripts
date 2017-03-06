@@ -11,7 +11,7 @@ class MiqUserSeed
         dep.save
         project = dep.children.create(name: '示例项目', divisible: false)
         project.save
-        user = User.new({:userid => 'user1', :name => '示例用户1', :password => 'user1'})
+        user1 = User.new({:userid => 'user1', :name => '示例用户1', :password => 'user1'})
         user2 = User.new({:userid => 'user2', :name => '示例用户2', :password => 'user2'})
         user1.miq_groups = [project.miq_groups.last]
         user1.save
