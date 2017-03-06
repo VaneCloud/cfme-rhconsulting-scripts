@@ -18,6 +18,7 @@ rm-installed-files:
 	rm -f /var/www/miq/vmdb/lib/tasks/rhconsulting_alerts.rake
 	rm -f /var/www/miq/vmdb/lib/tasks/rhconsulting_illegal_chars.rb
 	rm -f /var/www/miq/vmdb/lib/tasks/rhconsulting_options.rb
+	rm -f /var/www/miq/vmdb/lib/tasks/rhconsulting_users.rake
 	rm -f /usr/bin/miqexport
 	rm -f /usr/bin/miqimport
 	rm -f /usr/bin/export-miqdomain
@@ -38,6 +39,7 @@ install:
 	install -Dm644 rhconsulting_alerts.rake /var/www/miq/vmdb/lib/tasks/rhconsulting_alerts.rake
 	install -Dm644 rhconsulting_illegal_chars.rb /var/www/miq/vmdb/lib/tasks/rhconsulting_illegal_chars.rb
 	install -Dm644 rhconsulting_options.rb /var/www/miq/vmdb/lib/tasks/rhconsulting_options.rb
+	install -Dm644 rhconsulting_users.rake /var/www/miq/vmdb/lib/tasks/rhconsulting_users.rake
 	install -Dm755 bin/miqexport /usr/bin/miqexport
 	install -Dm755 bin/miqimport /usr/bin/miqimport
 	install -Dm755 bin/export-miqdomain /usr/bin/export-miqdomain
